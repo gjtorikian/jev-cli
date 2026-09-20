@@ -1,0 +1,187 @@
+---
+name: jev-cli
+description: Use the Jev CLI for bounded semantic judgments with Noul, Choice, Score, or batched questions. Use when classifying, scoring, routing, verifying, or diagnosing structured Jev decisions from the command line.
+---
+
+# Jev CLI
+
+Use `jev` for small, bounded semantic judgments. Jev should decide among explicit alternatives or estimate a crisp proposition; code should own control flow, arithmetic, thresholds, side effects, and policy.
+
+## Choose the right primitive
+
+- **Noul** — a crisp yes/no proposition where the probability itself is useful.
+- **Choice** — one answer from a known unordered set.
+- **Score** — one position on an ordered qualitative scale.
+- **Batch** — several independent questions over the same state. Prefer this when questions share context.
+
+Do not use Jev for open-ended generation, planning, arithmetic, counting, date comparison, or multi-step reasoning. Compute deterministic facts first and ask Jev only for the semantic judgment.
+
+## Prepare state
+
+Send only the evidence needed by the question.
+
+Prefer structured JSON so the question can refer to explicit fields. Remove unrelated context and compute deterministic values before invoking Jev.
+
+Good:
+
+```json
+{"ticket":{"text":"I was charged twice and need one charge refunded today."}}
+```
+
+Avoid sending an entire conversation, document, or application state when one field is enough.
+
+## Write questions
+
+Make each question atomic and literal.
+
+Good:
+
+```text
+Does `ticket.text` explicitly request a refund?
+```
+
+Avoid:
+
+```text
+Analyze this ticket and decide what we should do.
+```
+
+Keep business policy outside the question. If a refund request above a threshold should route to billing, apply that rule in caller code.
+
+### Noul
+
+Use for a clear proposition:
+
+```bash
+jev noul \
+  --state '{"ticket":{"text":"Please refund the duplicate charge today."}}' \
+  --question 'Does `ticket.text` explicitly request a refund?' \
+  --answer-only
+```
+
+A value near 0.5 means uncertainty. It does not mean "medium". Use Score for degrees.
+
+### Choice
+
+Use when the answer belongs to a bounded taxonomy:
+
+```bash
+jev choice \
+  --state '{"ticket":{"text":"I was charged twice."}}' \
+  --question 'Which team should handle `ticket.text`?' \
+  --choices '{"billing":"Charges, invoices, refunds, or subscriptions","technical":"Bugs or outages","other":"Anything else"}'
+```
+
+Add `other` or an equivalent fallback when the taxonomy may be incomplete. Make nearby options contrastive.
+
+### Score
+
+Use for an ordered scale whose levels can be described distinctly:
+
+```bash
+jev score \
+  --state '{"impact":"Checkout is unavailable and there is no workaround."}' \
+  --question 'How severe is the reported impact?' \
+  --levels '["Cosmetic or negligible impact","Degraded but a workaround exists","Blocking with no workaround"]'
+```
+
+Describe concrete situations rather than labels such as "low", "medium", and "high" when those labels alone are ambiguous.
+
+## Batch shared state
+
+Questions in one request share the same state. Prefer one batch over several sequential CLI calls when the questions are independent.
+
+```json
+{
+  "refund_requested": {
+    "type": "noul",
+    "instructions": "Does `ticket.text` explicitly request a refund?"
+  },
+  "queue": {
+    "type": "choice",
+    "instructions": "Which team should handle `ticket.text`?",
+    "choices": {
+      "billing": "Charges, invoices, refunds, or subscriptions",
+      "technical": "Bugs or outages",
+      "other": "Anything else"
+    }
+  },
+  "severity": {
+    "type": "score",
+    "instructions": "How severe is the impact described in `ticket.text`?",
+    "levels": [
+      "Cosmetic or negligible impact",
+      "Degraded but a workaround exists",
+      "Blocking with no workaround"
+    ]
+  }
+}
+```
+
+Save that as `questions.json` and run:
+
+```bash
+jev run \
+  --state-file ticket.json \
+  --questions-file questions.json
+```
+
+Use a second Jev request only when code genuinely cannot construct it until after seeing the first answer.
+
+## Interpret answers safely
+
+The top answer is not proof of correctness.
+
+- Inspect probabilities when a decision matters.
+- Treat confidence as evidence about the answer distribution, not guaranteed accuracy.
+- Set thresholds in caller code.
+- Use a review, confirmation, or fallback path below the threshold.
+- Raise thresholds as the cost of a wrong action increases.
+- Validate thresholds against labelled examples from the real task.
+
+Never hide policy inside question wording merely to force a desired answer.
+
+## Improve weak judgments
+
+When a result is wrong or uncertain, isolate the failing question first.
+
+- **Choice overlaps** → make option descriptions more contrastive; add `other` if needed.
+- **Noul near 0.5** → make the condition more literal and observable.
+- **Score clusters in the middle** → rewrite levels as distinct concrete situations.
+- **Accuracy falls with larger inputs** → remove irrelevant state.
+- **Counting, sums, dates, or numeric comparisons fail** → move the deterministic operation to code.
+- **One wording fix breaks another case** → the question may contain multiple judgments; split it.
+- **Answers are right but the final action is wrong** → change policy, weights, or thresholds in code rather than rewriting the question.
+
+Revise against labelled examples. Do not treat higher confidence alone as evidence of improvement.
+
+## Provider checks
+
+Run `jev doctor` to verify provider/model configuration and whether the expected credential environment variables are present.
+
+```bash
+jev doctor
+jev doctor --provider vercel
+```
+
+Credentials belong in environment variables or a secret manager, never command-line arguments.
+
+## Checklist
+
+Before relying on a Jev decision:
+
+- Each question asks one semantic property.
+- The primitive matches how caller code uses the answer.
+- State contains only necessary evidence.
+- Deterministic computation stays in code.
+- Independent questions sharing state are batched.
+- Choice taxonomies have an appropriate fallback when incomplete.
+- Score levels are concrete and distinguishable.
+- Thresholds and side effects live outside Jev.
+- Low-confidence decisions have a safe fallback.
+- Changes are evaluated on labelled examples.
+
+## Further reading
+
+This skill is intentionally CLI-focused. For deeper Jev question-design patterns, see TypeSafe AI's Jev documentation and the independent `building-with-jev-skill` reference:
+https://github.com/dbreunig/building-with-jev-skill/tree/main/skills/jev

@@ -118,6 +118,11 @@ console.log(response.answers);
 For dynamically constructed question definitions, `buildQuestion()` and `buildQuestions()` accept JSON-friendly specs. The package also exports `SystemOneLikeClient` so higher-level libraries can inject deterministic fixture clients in tests.
 
 
+## Agent skill
+
+The npm package includes `skills/jev-cli/SKILL.md` for coding agents that need guidance on selecting Jev primitives, shaping state, batching questions, interpreting confidence, and using the CLI safely. It is intentionally CLI-focused; domain-specific packages such as `jev-agent-browser` keep their own skills.
+
+
 ## Development
 
 ```bash
