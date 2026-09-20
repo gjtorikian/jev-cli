@@ -1,6 +1,6 @@
 {
   "name": "@mhingston5/jev-cli",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Provider-agnostic CLI and client for TypeSafe AI Jev",
   "license": "MIT",
   "author": "Mark Hingston",
@@ -24,6 +24,7 @@
   },
   "files": [
     "dist",
+    "skills",
     "README.md",
     "LICENSE"
   ],
