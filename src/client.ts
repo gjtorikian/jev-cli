@@ -27,7 +27,15 @@ function endpointRoot(endpoint: string): string {
 
 function responsePayload(payload: any): SystemOneResponse {
   const body = payload?.data ?? payload;
-  const value = body?.answers ? body : body?.result?.answers ? body.result : body?.output?.answers ? body.output : body;
+  const value = body?.answers
+    ? body
+    : body?.result?.result?.answers
+      ? body.result.result
+      : body?.result?.answers
+        ? body.result
+        : body?.output?.answers
+          ? body.output
+          : body;
   if (!value || typeof value !== "object" || !value.answers || typeof value.answers !== "object") {
     throw new Error("Jev API response did not contain answers");
   }
@@ -231,4 +239,3 @@ export function createJevClient(options: JevClientOptions = {}): SystemOneLikeCl
   }
   return new TypeSafeCompatibleJevClient(provider, options);
 }
-
