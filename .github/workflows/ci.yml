@@ -17,4 +17,5 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+      - run: test -f dist/index.d.ts
       - run: npm run pack:check
