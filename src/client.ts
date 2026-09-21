@@ -1,7 +1,7 @@
 import { TypeSafeClient } from "@typesafe-ai/sdk";
 import type { SystemOneLikeClient, SystemOneRequest, SystemOneResponse } from "./types.js";
 
-export const JEV_PROVIDERS = ["typesafe", "vercel", "cloudflare", "custom"] as const;
+export const JEV_PROVIDERS = ["typesafe", "openrouter", "vercel", "cloudflare", "custom"] as const;
 export type JevProvider = typeof JEV_PROVIDERS[number];
 
 
@@ -18,6 +18,7 @@ export interface JevClientOptions {
 
 
 export const DEFAULT_ENDPOINT = "https://api.typesafe.ai/v1/systemone";
+export const OPENROUTER_ENDPOINT = "https://openrouter.ai/api/alpha/decisions";
 export const VERCEL_ENDPOINT = "https://ai-gateway.vercel.sh/typesafe/v1/systemone";
 
 function endpointRoot(endpoint: string): string {
@@ -64,6 +65,8 @@ export function defaultModelForProvider(provider: JevProvider): string {
   switch (provider) {
     case "typesafe":
       return process.env.TYPESAFE_DEFAULT_MODEL?.trim() || "jev-1.13.0";
+    case "openrouter":
+      return "typesafe/jev-1.13";
     case "vercel":
       return "typesafe-ai/jev";
     case "cloudflare":
@@ -76,6 +79,7 @@ export function defaultModelForProvider(provider: JevProvider): string {
 export function credentialEnvironmentForProvider(provider: JevProvider): string[] {
   switch (provider) {
     case "typesafe": return ["TYPESAFE_API_KEY"];
+    case "openrouter": return ["OPENROUTER_API_KEY"];
     case "vercel": return ["AI_GATEWAY_API_KEY"];
     case "cloudflare": return ["CLOUDFLARE_API_TOKEN", "CLOUDFLARE_ACCOUNT_ID"];
     case "custom": return ["JEV_API_KEY"];
@@ -85,6 +89,7 @@ export function credentialEnvironmentForProvider(provider: JevProvider): string[
 function defaultApiKey(provider: JevProvider): string | undefined {
   switch (provider) {
     case "typesafe": return process.env.TYPESAFE_API_KEY;
+    case "openrouter": return process.env.OPENROUTER_API_KEY;
     case "vercel": return process.env.AI_GATEWAY_API_KEY;
     case "cloudflare": return process.env.CLOUDFLARE_API_TOKEN;
     case "custom": return process.env.JEV_API_KEY ?? process.env.TYPESAFE_API_KEY;
@@ -97,6 +102,8 @@ export function defaultEndpointForProvider(provider: JevProvider, accountId?: st
   switch (provider) {
     case "typesafe":
       return process.env.TYPESAFE_BASE_URL?.trim() || DEFAULT_ENDPOINT;
+    case "openrouter":
+      return OPENROUTER_ENDPOINT;
     case "vercel":
       return VERCEL_ENDPOINT;
     case "cloudflare": {
@@ -230,6 +237,14 @@ export class CloudflareJevClient implements SystemOneLikeClient {
 export function createJevClient(options: JevClientOptions = {}): SystemOneLikeClient {
   const provider = resolveJevProvider(options);
   if (provider === "cloudflare") return new CloudflareJevClient(options);
+  if (provider === "openrouter") {
+    return new FetchJevClient({
+      ...options,
+      apiKey: options.apiKey ?? defaultApiKey("openrouter"),
+      endpoint: options.endpoint ?? defaultEndpointForProvider("openrouter", options.accountId),
+      model: options.model ?? defaultModelForProvider("openrouter"),
+    });
+  }
   if (provider === "custom") {
     return new FetchJevClient({
       ...options,
