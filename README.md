@@ -2,7 +2,7 @@
 
 A small, provider-agnostic command-line interface and Node.js client for [TypeSafe AI Jev](https://typesafe.ai/).
 
-The package owns the reusable Jev boundary: provider selection, System One transport, typed question construction, and the `jev` executable. Domain-specific tools such as `jev-agent-browser` can depend on this package while keeping their own observation, policy, and execution loops.
+The package owns the reusable Jev boundary: provider selection, System One transport, typed question construction, and the `jev` executable. Domain-specific tools such as [`jev-agent-browser`](https://github.com/mhingston/jev-agent-browser/tree/main) can depend on this package while keeping their own observation, policy, and execution loops.
 
 ## Install
 
