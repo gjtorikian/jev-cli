@@ -81,13 +81,24 @@ Use `--questions-file questions.json` for checked-in question definitions. State
 | Provider | CLI value | Credentials | Default model |
 | --- | --- | --- | --- |
 | TypeSafe | `typesafe` | `TYPESAFE_API_KEY` | `jev-1.13.0` |
+| OpenRouter | `openrouter` | `OPENROUTER_API_KEY` | `typesafe/jev-1.13` |
 | Vercel AI Gateway | `vercel` | `AI_GATEWAY_API_KEY` | `typesafe-ai/jev` |
 | Cloudflare AI | `cloudflare` | `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` | `typesafe/jev` |
 | Custom | `custom` | `JEV_API_KEY` when required | caller-defined / Jev default |
 
 Select the transport with `--provider` or `JEV_PROVIDER`. Override the model with `--model` or `JEV_MODEL`, and the endpoint with `--endpoint` or `JEV_ENDPOINT`.
 
+OpenRouter uses its native Decisions endpoint. Supply an OpenRouter API key and select the provider explicitly:
+
 ```bash
+export OPENROUTER_API_KEY="..."
+jev noul --provider openrouter \
+  --state "Please refund this today" \
+  --question "Does the message communicate urgency?"
+```
+
+```bash
+jev doctor --provider openrouter
 jev doctor --provider vercel
 ```
 

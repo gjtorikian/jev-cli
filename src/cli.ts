@@ -35,7 +35,7 @@ Question options:
   --questions-file <path>     Read batch question specs from JSON.
 
 Provider options:
-  --provider <typesafe|vercel|cloudflare|custom>
+  --provider <typesafe|openrouter|vercel|cloudflare|custom>
   --model <id>
   --endpoint <url>
   --account-id <id>           Cloudflare account id; env is preferred.

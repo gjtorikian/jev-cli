@@ -161,8 +161,11 @@ Run `jev doctor` to verify provider/model configuration and whether the expected
 
 ```bash
 jev doctor
+jev doctor --provider openrouter
 jev doctor --provider vercel
 ```
+
+For OpenRouter, set `OPENROUTER_API_KEY`; the CLI uses OpenRouter's native Decisions endpoint and defaults to `typesafe/jev-1.13`.
 
 Credentials belong in environment variables or a secret manager, never command-line arguments.
 
